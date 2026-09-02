@@ -19,9 +19,10 @@ const TURKEY_FILTERS: (SleepKind | "all")[] = ["all", "hostel", "bus", "boat"];
 export function TripApp() {
   const [tab, setTab] = useState<Tab>("europe");
 
-  // Rendered on the server too, so start from the trip's own timezone-free
-  // date and let the client correct it to the viewer's actual today on mount.
-  const [today, setToday] = useState(TRIP_START);
+  // Empty until mount: the server has no viewer timezone, and guessing one
+  // flashes a wrong "Today" marker before hydration corrects it. Every date
+  // comparison treats "" as "no day is today and nothing is overdue yet".
+  const [today, setToday] = useState("");
   useEffect(() => setToday(todayIso()), []);
 
   const checklist = useLocalStorage<Record<string, boolean>>(STORAGE_KEY, {});
@@ -35,11 +36,12 @@ export function TripApp() {
     isOverdue(t.bookBy, today, checklist.value[t.id] === true || t.urgency === "done"),
   ).length;
 
-  const daysToGo = daysBetween(today, TRIP_START);
-  const daysToEnd = daysBetween(today, TRIP_END);
+  const daysToGo = today ? daysBetween(today, TRIP_START) : 0;
+  const daysToEnd = today ? daysBetween(today, TRIP_END) : -1;
 
-  const countdown =
-    daysToGo > 0
+  const countdown = !today
+    ? null
+    : daysToGo > 0
       ? { num: daysToGo, label: daysToGo === 1 ? "day to go" : "days to go" }
       : daysToEnd >= 0
         ? { num: Math.abs(daysToGo) + 1, label: "day of the trip" }
