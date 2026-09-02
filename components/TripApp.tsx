@@ -66,7 +66,7 @@ export function TripApp() {
       <nav className="tabs" role="tablist" aria-label="Trip sections">
         {(
           [
-            { key: "europe", label: "🗺️ Europe", sub: "9 Sep – 14 Oct" },
+            { key: "europe", label: "🗺️ Europe", sub: "9 Sep – 13 Oct" },
             { key: "turkey", label: "🕌 Turkey (solo)", sub: "14 – 28 Oct" },
             {
               key: "checklist",

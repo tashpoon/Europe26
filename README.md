@@ -84,5 +84,14 @@ changed in the move:
   Chromium ship different ICU data (`Wed 9 Sept` vs `Wed, 9 Sept`), which
   otherwise causes a hydration mismatch.
 
-Three unresolved conflicts in the original plan are surfaced as **⚠️ Plan
-conflicts** items at the top of the checklist rather than silently resolved.
+Unresolved conflicts in the original plan are surfaced as **⚠️ Plan conflicts**
+items at the top of the checklist rather than silently resolved.
+
+### The Berlin → London flight
+
+The real flight is **easyJet EZY8630 on Fri 9 Oct**, not 7 Oct as the original
+had it. That makes Berlin 5 nights (4–8 Oct) and London 5 nights (9–13 Oct) —
+so the original's "5 nights in London" was right and only the date was wrong.
+The two extra Berlin days are a Potsdam day trip and a proper club night on
+Thursday 8 Oct, which is when Tresor and Berghain's experimental night actually
+run. Confirm the arrival airport: easyJet flies BER to both Gatwick and Luton.
