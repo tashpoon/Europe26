@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { SleepKind, Todo } from "@/lib/types";
+import type { SleepKind } from "@/lib/types";
 import { EUROPE_LEGS } from "@/lib/data/europe";
 import { TURKEY_LEGS } from "@/lib/data/turkey";
 import { TODOS } from "@/lib/data/todos";
-import { STORAGE_KEY, STORAGE_KEY_CUSTOM, TRIP_END, TRIP_START } from "@/lib/constants";
+import { TRIP_END, TRIP_START } from "@/lib/constants";
 import { daysBetween, formatShort, isOverdue, todayIso } from "@/lib/dates";
-import { useLocalStorage } from "@/lib/useLocalStorage";
+import { customList, doneMap } from "@/lib/syncState";
+import { useTripState } from "@/lib/useTripState";
 import { ItineraryTab } from "./ItineraryTab";
 import { ChecklistTab } from "./ChecklistTab";
 
@@ -25,15 +26,16 @@ export function TripApp() {
   const [today, setToday] = useState("");
   useEffect(() => setToday(todayIso()), []);
 
-  const checklist = useLocalStorage<Record<string, boolean>>(STORAGE_KEY, {});
-  const customTodos = useLocalStorage<Todo[]>(STORAGE_KEY_CUSTOM, []);
+  const trip = useTripState();
 
-  const all = [...TODOS, ...customTodos.value];
-  const doneCount = all.filter(
-    (t) => checklist.value[t.id] === true || t.urgency === "done",
-  ).length;
+  const done = doneMap(trip.state);
+  const all = [...TODOS, ...customList(trip.state)];
+  const isDone = (id: string, urgency: string) =>
+    done[id] === true || urgency === "done";
+
+  const doneCount = all.filter((t) => isDone(t.id, t.urgency)).length;
   const overdueCount = all.filter((t) =>
-    isOverdue(t.bookBy, today, checklist.value[t.id] === true || t.urgency === "done"),
+    isOverdue(t.bookBy, today, isDone(t.id, t.urgency)),
   ).length;
 
   const daysToGo = today ? daysBetween(today, TRIP_START) : 0;
@@ -124,13 +126,17 @@ export function TripApp() {
         )}
 
         {tab === "checklist" &&
-          (checklist.ready && customTodos.ready ? (
+          (trip.ready ? (
             <ChecklistTab
               today={today}
-              done={checklist.value}
-              setDone={checklist.save}
-              custom={customTodos.value}
-              setCustom={customTodos.save}
+              state={trip.state}
+              update={trip.update}
+              sync={{
+                status: trip.status,
+                lastSync: trip.lastSync,
+                connect: trip.connect,
+                disconnect: trip.disconnect,
+              }}
             />
           ) : (
             <p className="empty">Loading your ticks…</p>
@@ -138,7 +144,7 @@ export function TripApp() {
       </main>
 
       <footer className="colophon">
-        TASH · EUROPE + TURKEY 2026 · TICKS SAVE TO THIS BROWSER
+        TASH · EUROPE + TURKEY 2026
       </footer>
     </>
   );

@@ -474,6 +474,103 @@ button {
   padding: 14px;
 }
 
+/* ── Sync bar ─────────────────────────────────────────────── */
+
+.syncbar {
+  background: var(--ink-3);
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  padding: 9px 12px;
+  margin-bottom: 14px;
+}
+
+.syncbar-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  border-radius: 50%;
+}
+
+.sync-msg {
+  font-size: 11px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.sync-btn {
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 10px;
+  color: var(--dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sync-btn:hover {
+  border-color: #4ecdc4;
+  color: #4ecdc4;
+}
+
+.sync-form {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.sync-form label {
+  display: block;
+  font-size: 9px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
+
+.sync-form-row {
+  display: flex;
+  gap: 8px;
+}
+
+.sync-form input {
+  flex: 1;
+  min-width: 0;
+  background: var(--ink-2);
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: var(--body);
+  font-size: 12px;
+  font-family: var(--serif);
+}
+
+.sync-form input:focus {
+  outline: 1px solid #4ecdc4;
+  outline-offset: -1px;
+}
+
+.sync-help {
+  margin: 9px 0 0;
+  font-size: 10px;
+  color: var(--dim);
+  line-height: 1.6;
+}
+
+.sync-help code {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 10px;
+}
+
 .progress-head {
   display: flex;
   justify-content: space-between;

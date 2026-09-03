@@ -64,5 +64,9 @@ export const TODO_CATEGORIES = [
   "📱 Turkey",
 ];
 
+/** Pre-sync keys. Still read once, to migrate ticks made before sync existed. */
 export const STORAGE_KEY = "europe26-checklist-v1";
 export const STORAGE_KEY_CUSTOM = "europe26-checklist-v1-custom";
+
+export const STORAGE_KEY_STATE = "europe26-state-v2";
+export const STORAGE_KEY_PASSPHRASE = "europe26-trip-key";

@@ -3,13 +3,14 @@
 Melbourne → Europe → London → Turkey → Melbourne, 9 Sep – 28 Oct 2026.
 
 A day-by-day itinerary with where to sleep each night, plus a booking checklist
-that ticks off and saves in your browser. Built as a static Next.js site, ready
-to deploy on Vercel.
+you can tick off — optionally shared between two phones. A Next.js site that
+deploys to Vercel; the pages are static, with one small API route for sharing.
 
 ## Deploy to Vercel
 
-The repo is zero-config — Vercel detects Next.js and needs no environment
-variables or build settings.
+The repo is zero-config — Vercel detects Next.js and needs no build settings.
+Environment variables are only needed for the shared checklist (see below); the
+site deploys and works without them.
 
 **From the dashboard (easiest):**
 
@@ -28,6 +29,49 @@ vercel --prod   # production
 ```
 
 Every push to the connected branch redeploys automatically.
+
+## Sharing the checklist between two phones
+
+Out of the box, ticks save to whichever browser you're using and go no further.
+To share one list between two people, attach a store and set a code.
+
+**1. Add Upstash Redis** — Vercel dashboard → your project → **Storage** →
+**Marketplace Database Providers** → **Upstash** → **Redis** → Create. Accept
+the free tier and connect it to this project. Vercel writes the
+`KV_REST_API_URL` and `KV_REST_API_TOKEN` environment variables for you.
+
+**2. Set a trip code** — Settings → **Environment Variables** → add
+`TRIP_PASSPHRASE` with any phrase you'll both remember. Apply it to
+Production (and Preview, if you want previews to share the same list).
+
+**3. Redeploy**, then on each phone open the Checklist tab, tap **Share with
+partner**, and enter the code once. It's remembered per device.
+
+Until all three are done the site works exactly as before — the sync bar just
+says sharing isn't set up, and ticks stay local.
+
+### How it behaves on the road
+
+Local-first by design, because half this trip is in mountains:
+
+- A tick applies **instantly**, offline or not, and is saved on the device.
+- When there's signal it syncs; the bar shows `Offline — will sync` otherwise.
+- Changes reach the other phone within about 12 seconds, no reload needed.
+- Both of you can tick different things with no signal at all. When you're both
+  back online, everything merges — nobody's work is overwritten.
+- Tick the *same* item on both phones and the later tap wins.
+- Deleting a custom task leaves a tombstone, so the delete survives a merge with
+  a phone that still has it.
+
+The passphrase is only ever compared on the server, in constant time, and is
+never bundled into the page.
+
+### One thing to watch
+
+Vercel gives every deployment its own preview URL. Browser storage is
+per-domain, so ticks made on `europe26-a1b2c3.vercel.app` won't appear on your
+main domain — it looks like they vanished. Bookmark the production URL and use
+only that. (Once sync is on, connecting the same code on both closes that gap.)
 
 ## Run locally
 
@@ -51,6 +95,7 @@ components/
   DayCard.tsx       one expandable day
   ChecklistTab.tsx  booking checklist with overdue detection
   PhotoImage.tsx    hotlinked photo with emoji fallback
+  SyncBar.tsx       sharing status and the trip-code prompt
 lib/
   data/europe.ts    Europe itinerary
   data/turkey.ts    Turkey itinerary
@@ -58,7 +103,10 @@ lib/
   dates.ts          date maths and formatting
   constants.ts      sleep types, urgency levels, storage keys
   photos.ts         Unsplash photo IDs per day
-  useLocalStorage.ts
+  syncState.ts      merge rules for the shared checklist
+  useTripState.ts   local-first state with background sync
+  redis.ts          Upstash REST client (server only)
+app/api/checklist/  GET and POST for the shared list
 ```
 
 ### Editing the trip
@@ -75,8 +123,9 @@ shows as **Overdue** in red.
 This started as a Claude artifact (`useState` + `window.storage`). Two things
 changed in the move:
 
-- **Storage** moved from `window.storage` to `localStorage`, so ticks live in
-  whichever browser you're using rather than syncing across devices.
+- **Storage** moved from `window.storage` to `localStorage`, with an optional
+  shared layer on top (see *Sharing the checklist* above). Ticks made before
+  sync existed are migrated automatically rather than lost.
 - **Dates are formatted by hand**, not with `toLocaleDateString` — Node and
   Chromium ship different ICU data (`Wed 9 Sept` vs `Wed, 9 Sept`), which
   otherwise causes a hydration mismatch.

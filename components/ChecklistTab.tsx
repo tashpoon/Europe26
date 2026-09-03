@@ -5,6 +5,16 @@ import type { Todo, Urgency } from "@/lib/types";
 import { TODOS } from "@/lib/data/todos";
 import { TODO_CATEGORIES, URGENCY } from "@/lib/constants";
 import { formatShort, formatWithYear, isOverdue } from "@/lib/dates";
+import {
+  addCustom,
+  customList,
+  doneMap,
+  removeCustom,
+  setDone as setDoneIn,
+  type TripState,
+} from "@/lib/syncState";
+import { SyncBar } from "./SyncBar";
+import type { SyncStatus } from "@/lib/useTripState";
 
 const BLANK = {
   item: "",
@@ -18,16 +28,19 @@ const BLANK = {
 
 export function ChecklistTab({
   today,
-  done,
-  setDone,
-  custom,
-  setCustom,
+  state,
+  update,
+  sync,
 }: {
   today: string;
-  done: Record<string, boolean>;
-  setDone: (next: Record<string, boolean>) => void;
-  custom: Todo[];
-  setCustom: (next: Todo[]) => void;
+  state: TripState;
+  update: (change: (current: TripState) => TripState) => void;
+  sync: {
+    status: SyncStatus;
+    lastSync: number | null;
+    connect: (key: string) => void;
+    disconnect: () => void;
+  };
 }) {
   const [filterUrgency, setFilterUrgency] = useState<Urgency | "all">("all");
   const [filterCat, setFilterCat] = useState("all");
@@ -35,6 +48,8 @@ export function ChecklistTab({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [draft, setDraft] = useState(BLANK);
 
+  const done = useMemo(() => doneMap(state), [state]);
+  const custom = useMemo(() => customList(state), [state]);
   const all = useMemo(() => [...TODOS, ...custom], [custom]);
 
   const isDone = (todo: Todo) => done[todo.id] === true || todo.urgency === "done";
@@ -55,24 +70,24 @@ export function ChecklistTab({
       (filterCat === "all" || t.cat === filterCat),
   );
 
-  const toggle = (id: string) => setDone({ ...done, [id]: !done[id] });
+  const toggle = (id: string) => update((s) => setDoneIn(s, id, !done[id]));
 
   const add = () => {
     if (!draft.item.trim()) return;
-    setCustom([
-      ...custom,
-      {
-        id: `custom-${Date.now()}`,
-        item: draft.item.trim(),
-        cat: draft.cat,
-        urgency: draft.urgency,
-        bookBy: draft.bookBy || null,
-        tripDate: draft.tripDate || null,
-        notes: draft.notes,
-        url: draft.url,
-        custom: true,
-      },
-    ]);
+    const todo: Todo = {
+      // Random suffix so two phones adding a task in the same millisecond
+      // don't collide on the shared list.
+      id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      item: draft.item.trim(),
+      cat: draft.cat,
+      urgency: draft.urgency,
+      bookBy: draft.bookBy || null,
+      tripDate: draft.tripDate || null,
+      notes: draft.notes,
+      url: draft.url,
+      custom: true,
+    };
+    update((s) => addCustom(s, todo));
     setDraft(BLANK);
     setShowAdd(false);
   };
@@ -82,15 +97,19 @@ export function ChecklistTab({
       setConfirmDelete(id);
       return;
     }
-    setCustom(custom.filter((t) => t.id !== id));
-    const next = { ...done };
-    delete next[id];
-    setDone(next);
+    update((s) => removeCustom(s, id));
     setConfirmDelete(null);
   };
 
   return (
     <div className="checklist">
+      <SyncBar
+        status={sync.status}
+        lastSync={sync.lastSync}
+        onConnect={sync.connect}
+        onDisconnect={sync.disconnect}
+      />
+
       <div className="progress-head">
         <span>Overall progress</span>
         <span>
