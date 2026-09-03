@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { isConfigured, missingConfig, redisGet, redisSet } from "@/lib/redis";
-import { EMPTY_STATE, mergeState, parseState, type TripState } from "@/lib/syncState";
+import { getStore, isConfigured, missingConfig } from "@/lib/store";
+import { EMPTY_STATE, parseState, type TripState } from "@/lib/syncState";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const KEY = "europe26:checklist";
 
 /** Compares in constant time so the passphrase can't be recovered by timing. */
 function passphraseOk(supplied: string | null): boolean {
@@ -19,33 +17,29 @@ function passphraseOk(supplied: string | null): boolean {
   return timingSafeEqual(a, b);
 }
 
-function notConfigured() {
-  return NextResponse.json(
-    { error: "sync_not_configured", missing: missingConfig() },
-    { status: 503 },
-  );
-}
-
-async function readState(): Promise<TripState> {
-  const raw = await redisGet(KEY);
-  if (!raw) return EMPTY_STATE;
-  try {
-    return parseState(JSON.parse(raw));
-  } catch {
-    // A corrupt value shouldn't wedge the checklist — start clean and let the
-    // next write from either phone repopulate it.
-    return EMPTY_STATE;
+/** Shared guard: 503 when unconfigured, 401 on a bad code, else the store. */
+function authorise(request: Request) {
+  if (!isConfigured()) {
+    return {
+      error: NextResponse.json(
+        { error: "sync_not_configured", missing: missingConfig() },
+        { status: 503 },
+      ),
+    };
   }
-}
-
-export async function GET(request: Request) {
-  if (!isConfigured()) return notConfigured();
   if (!passphraseOk(request.headers.get("x-trip-key"))) {
-    return NextResponse.json({ error: "bad_passphrase" }, { status: 401 });
+    return { error: NextResponse.json({ error: "bad_passphrase" }, { status: 401 }) };
   }
+  return { store: getStore()! };
+}
+
+/** Reading is merging an empty state: it returns what's stored, unchanged. */
+export async function GET(request: Request) {
+  const gate = authorise(request);
+  if (gate.error) return gate.error;
 
   try {
-    return NextResponse.json({ state: await readState() });
+    return NextResponse.json({ state: await gate.store.merge(EMPTY_STATE) });
   } catch {
     return NextResponse.json({ error: "store_unavailable" }, { status: 502 });
   }
@@ -53,15 +47,11 @@ export async function GET(request: Request) {
 
 /**
  * Merges the caller's state into what's stored and returns the result, so both
- * phones converge on the same list. Read-modify-write races between two people
- * ticking at the same instant are possible but self-correcting: the merge is
- * commutative, and the loser's next poll or push carries its edit back.
+ * phones converge on the same list.
  */
 export async function POST(request: Request) {
-  if (!isConfigured()) return notConfigured();
-  if (!passphraseOk(request.headers.get("x-trip-key"))) {
-    return NextResponse.json({ error: "bad_passphrase" }, { status: 401 });
-  }
+  const gate = authorise(request);
+  if (gate.error) return gate.error;
 
   let incoming: TripState;
   try {
@@ -72,9 +62,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const merged = mergeState(await readState(), incoming);
-    await redisSet(KEY, JSON.stringify(merged));
-    return NextResponse.json({ state: merged });
+    return NextResponse.json({ state: await gate.store.merge(incoming) });
   } catch {
     return NextResponse.json({ error: "store_unavailable" }, { status: 502 });
   }

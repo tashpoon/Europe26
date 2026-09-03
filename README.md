@@ -33,22 +33,37 @@ Every push to the connected branch redeploys automatically.
 ## Sharing the checklist between two phones
 
 Out of the box, ticks save to whichever browser you're using and go no further.
-To share one list between two people, attach a store and set a code.
+To share one list between two people, connect a database and set a code.
 
-**1. Add Upstash Redis** — Vercel dashboard → your project → **Storage** →
-**Marketplace Database Providers** → **Upstash** → **Redis** → Create. Accept
-the free tier and connect it to this project. Vercel writes the
-`KV_REST_API_URL` and `KV_REST_API_TOKEN` environment variables for you.
+### 1. Connect a database
 
-**2. Set a trip code** — Settings → **Environment Variables** → add
-`TRIP_PASSPHRASE` with any phrase you'll both remember. Apply it to
-Production (and Preview, if you want previews to share the same list).
+Either backend works — the app picks whichever environment variables it finds,
+preferring Postgres if both are set.
 
-**3. Redeploy**, then on each phone open the Checklist tab, tap **Share with
-partner**, and enter the code once. It's remembered per device.
+**Neon Postgres** (recommended, and reuses one you already have): set
+`DATABASE_URL` to the Neon connection string. `POSTGRES_URL` and
+`NEON_DATABASE_URL` are also accepted, so Vercel's own Neon integration works
+with no extra setup.
 
-Until all three are done the site works exactly as before — the sync bar just
-says sharing isn't set up, and ticks stay local.
+Pointing this at a Neon database shared with another project is fine. It
+creates one table, `europe26_checklist`, and touches nothing else.
+
+**Upstash Redis**: Vercel dashboard → **Storage** → **Upstash** → **Redis**.
+The integration writes `KV_REST_API_URL` and `KV_REST_API_TOKEN` for you.
+
+### 2. Set a trip code
+
+Settings → **Environment Variables** → add `TRIP_PASSPHRASE` with any phrase
+you'll both remember. Apply it to Production (and Preview, if you want previews
+to share the same list).
+
+### 3. Redeploy and connect
+
+On each phone, open the Checklist tab, tap **Share with partner**, and enter the
+code once. It's remembered per device.
+
+Until all of this is done the site works exactly as before — the sync bar says
+sharing isn't set up, and ticks stay local.
 
 ### How it behaves on the road
 
@@ -63,8 +78,29 @@ Local-first by design, because half this trip is in mountains:
 - Deleting a custom task leaves a tombstone, so the delete survives a merge with
   a phone that still has it.
 
-The passphrase is only ever compared on the server, in constant time, and is
-never bundled into the page.
+Every tick and custom task carries the timestamp of the edit that set it, and
+merging takes the newer side per item. On Postgres that comparison happens
+inside the upsert (`WHERE ... updated_at < EXCLUDED.updated_at`), so two phones
+writing at the same instant both land correctly with no read-modify-write race.
+The Redis path merges in the API route instead, which has a small race window —
+self-correcting, since the merge is commutative and the next poll carries any
+lost edit back, but it's the reason Postgres is preferred.
+
+The passphrase is only ever compared on the server, in constant time, and never
+reaches the browser bundle.
+
+### Testing the sync locally
+
+`scripts/store.test.mjs` runs the store against a real Postgres through the real
+Neon driver. Set `NEON_FETCH_ENDPOINT` to a Neon-compatible proxy — Neon Local,
+or a stand-in — and `DATABASE_URL` to any value, then:
+
+```bash
+node --import ./scripts/ts-resolve.mjs --experimental-strip-types scripts/store.test.mjs
+```
+
+`NEON_FETCH_ENDPOINT` is unset in production, where the driver derives the
+endpoint from the connection string.
 
 ### One thing to watch
 
@@ -105,8 +141,9 @@ lib/
   photos.ts         Unsplash photo IDs per day
   syncState.ts      merge rules for the shared checklist
   useTripState.ts   local-first state with background sync
-  redis.ts          Upstash REST client (server only)
+  store.ts          Postgres and Redis backends (server only)
 app/api/checklist/  GET and POST for the shared list
+scripts/            store tests and their TS resolve hook
 ```
 
 ### Editing the trip

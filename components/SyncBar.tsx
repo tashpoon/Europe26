@@ -97,9 +97,10 @@ export function SyncBar({
 
       {status === "unconfigured" && (
         <p className="sync-help">
-          Add an Upstash Redis store in the Vercel dashboard and set a{" "}
-          <code>TRIP_PASSPHRASE</code> environment variable, then redeploy. Until
-          then everything still works — ticks just stay on this device.
+          Connect a database in the Vercel dashboard — <code>DATABASE_URL</code>{" "}
+          for Neon Postgres, or <code>KV_REST_API_URL</code> for Upstash Redis —
+          and set a <code>TRIP_PASSPHRASE</code>, then redeploy. Until then
+          everything still works; ticks just stay on this device.
         </p>
       )}
     </div>
