@@ -4,13 +4,12 @@
   "private": true,
   "description": "Melbourne → Europe → London → Turkey trip plan, Sep–Oct 2026",
   "engines": {
-    "node": ">=20.9.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
