@@ -72,26 +72,53 @@ shows as **Overdue** in red.
 
 ### Notes on the port
 
-This started as a Claude artifact (`useState` + `window.storage`). Three things
+This started as a Claude artifact (`useState` + `window.storage`). Two things
 changed in the move:
 
-- **Weekdays were all one day off.** The original used 2025's calendar against
-  2026 dates — it called 9 Sep a Tuesday when it's a Wednesday. Dates are now
-  computed from the real 2026 calendar.
 - **Storage** moved from `window.storage` to `localStorage`, so ticks live in
   whichever browser you're using rather than syncing across devices.
 - **Dates are formatted by hand**, not with `toLocaleDateString` — Node and
   Chromium ship different ICU data (`Wed 9 Sept` vs `Wed, 9 Sept`), which
   otherwise causes a hydration mismatch.
 
-Unresolved conflicts in the original plan are surfaced as **⚠️ Plan conflicts**
-items at the top of the checklist rather than silently resolved.
+The countdown and the Today marker render only after mount. The server has no
+viewer timezone, so guessing one would flash a wrong day before hydration.
 
-### The Berlin → London flight
+### Shape of the trip
 
-The real flight is **easyJet EZY8630 on Fri 9 Oct**, not 7 Oct as the original
-had it. That makes Berlin 5 nights (4–8 Oct) and London 5 nights (9–13 Oct) —
-so the original's "5 nights in London" was right and only the date was wrong.
-The two extra Berlin days are a Potsdam day trip and a proper club night on
-Thursday 8 Oct, which is when Tresor and Berghain's experimental night actually
-run. Confirm the arrival airport: easyJet flies BER to both Gatwick and Luton.
+| Leg | Dates | Nights |
+| --- | --- | --- |
+| Minden → Heidelberg → Zurich | 9–14 Sep | van + campsite |
+| Dolomites | 15–16 Sep | campsite |
+| Slovenia (Bled, Triglav, Ljubljana, Soča) | 17–21 Sep | van + campsite |
+| Budapest | 22–23 Sep | campsite |
+| Slovakia | 24–25 Sep | van |
+| Poland (Kraków → Białowieża) | 26 Sep – 3 Oct | van + campsite |
+| Back to Minden, van goes home | 4–5 Oct | hotel |
+| Berlin | 6–8 Oct | 3 nights |
+| London | 9–13 Oct | 5 nights |
+| Turkey (solo) | 14–28 Oct | see the Turkey tab |
+
+24 van nights, 8 countries, ~5,400km before the van goes back.
+
+### Open questions
+
+These are **⚠️ Plan conflicts** items at the top of the checklist rather than
+things quietly decided in the data:
+
+- **Which London airport does EZY8630 land at?** easyJet flies BER to both
+  Gatwick and Luton, and the transfers into central London differ completely.
+  The departure time matters too — it decides whether a Thursday night out in
+  Berlin is realistic.
+- **Białowieża → Minden on 4 Oct is about 11 hours of driving.** The plan drops
+  the Poznań night but kept the old `5h 30m · 530km` label, which was the
+  distance to Poznań rather than Minden. The real run is roughly 1,030km. Either
+  break it near Poznań or leave Białowieża a day earlier.
+- **Does SunExpress fly London Stansted → Kayseri on Wed 14 Oct?** It's a weekly
+  service. If not, the fallback is London → Istanbul → Kayseri and the
+  Cappadocia days shift.
+
+Two smaller things fixed in the data rather than flagged: the last van night
+books a hotel, so it's tagged as a hotel night (which puts the total back at the
+24 van nights the plan claims), and the Soča rest day sits under Slovenia rather
+than Hungary, where the source had filed it.
