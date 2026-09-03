@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Melbourne → Europe → London → Turkey trip plan, Sep–Oct 2026",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "15.5.4",
+    "next": "15.5.25",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
