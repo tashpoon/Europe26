@@ -140,7 +140,7 @@ export const TODOS: Todo[] = [
     bookBy: "2026-08-15",
     cat: "🎟️ Entry",
     item: "Wieliczka Salt Mine guided tour (x2)",
-    tripDate: "2026-09-28",
+    tripDate: "2026-09-30",
     url: "wieliczka.eu",
     notes: "Sells out weeks ahead.",
   },
