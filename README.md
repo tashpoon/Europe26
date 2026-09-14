@@ -175,10 +175,10 @@ viewer timezone, so guessing one would flash a wrong day before hydration.
 | Leg | Dates | Nights |
 | --- | --- | --- |
 | Minden → Heidelberg → Zurich | 9–14 Sep | van + campsite |
-| Dolomites | 15–16 Sep | campsite |
-| Slovenia (Bled, Triglav, Ljubljana, Soča) | 17–21 Sep | van + campsite |
-| Budapest | 22–23 Sep | campsite |
-| Slovakia | 24–25 Sep | van |
+| Dolomites, via Sterzing | 15–18 Sep | van + campsite |
+| Slovenia (Bohinj, Triglav, Ljubljana, Soča) | 19–22 Sep | van + campsite |
+| Budapest | 23–24 Sep | campsite |
+| Slovakia | 25 Sep | van |
 | Poland (Kraków → Białowieża) | 26 Sep – 3 Oct | van + campsite |
 | Back to Minden, van goes home | 4–5 Oct | hotel |
 | Berlin | 6–8 Oct | 3 nights |
